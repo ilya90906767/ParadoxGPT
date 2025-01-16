@@ -1,0 +1,37 @@
+version: '3'
+
+services:
+  db:
+    image: postgres
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+
+  django:
+    build: ./news_bot
+    environment:
+      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE}
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./news_bot:/app
+      - ./media:/app/media
+    depends_on:
+      - db
+    command: sh -c "bash migrate.sh && python manage.py runserver 0.0.0.0:8000"
+
+  bot:
+    build: ./news_bot
+    environment:
+      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE}
+    env_file:
+      - .env
+    volumes:
+      - ./news_bot:/app
+    depends_on:
+      - db
+      - django
+    command: python manage.py run_bot 
